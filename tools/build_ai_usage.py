@@ -26,8 +26,10 @@ verify[]}], algorithm[], references[], external_code[], results {rows
 [{label, source, method}], notes[]}, analysis[], reflection[].
 
 A paragraph starting with "## " is written as a bold sub-heading.
-results.rows[].source: "roundN" (results/submissions/roundN/summary.csv) or a
-run id logged in results/experiments.csv.
+results.rows[].source: "roundN" (validation, results/submissions/roundN/),
+"roundN/train" (all train files, results/submissions/roundN/train/) or a run id
+logged in results/experiments.csv (with --split all, add "split" to the row:
+{"source": run_id, "split": "train", ...}).
 """
 from __future__ import annotations
 
@@ -79,9 +81,9 @@ def format_reference(r: dict) -> str:
     return s
 
 
-def result_value(source: str, method: str) -> dict:
+def result_value(source: str, method: str, split: str | None = None) -> dict:
     """{'pesq', 'snr_db', 'n'} of `method` in a round folder or a logged run."""
-    if re.fullmatch(r"round\d+", source):
+    if re.fullmatch(r"round\d+(/train)?", source):
         path = ROOT / "results" / "submissions" / source / "summary.csv"
         key = "method"
     else:
@@ -91,7 +93,8 @@ def result_value(source: str, method: str) -> dict:
         raise FileNotFoundError(path.relative_to(ROOT))
     with open(path, encoding="utf-8-sig") as f:
         for row in csv.DictReader(f):
-            if row["method"] == method and (key or row["run_id"] == source):
+            if row["method"] == method and (key or (
+                    row["run_id"] == source and (split is None or row["split"] == split))):
                 return {"pesq": float(row["pesq"]), "snr_db": float(row["snr_db"]),
                         "n": int(row["n"])}
     raise KeyError(f"{method} not found in {source}")
@@ -101,7 +104,7 @@ def results_table(rows: list[dict]) -> list[list[str]]:
     table = [["방법", "PESQ-WB", "SNR (dB)", "ΔPESQ", "ΔSNR (dB)"]]
     base = None
     for r in rows:
-        v = result_value(r["source"], r["method"])
+        v = result_value(r["source"], r["method"], r.get("split"))
         base = base or v
         table.append([r["label"], f"{v['pesq']:.3f}", f"{v['snr_db']:.2f}",
                       f"{v['pesq'] - base['pesq']:+.3f}", f"{v['snr_db'] - base['snr_db']:+.2f}"])

@@ -8,7 +8,7 @@
 
 prepare  checks results/submissions/roundN/ was scored with the current code
          (code fingerprint), then writes the round into submissions.json and
-         README (team, round, tag, validation PESQ/SNR). Commit afterwards.
+         README (team, round, tag, validation and full-train PESQ/SNR). Commit afterwards.
 tag      requires a clean working tree and a matching fingerprint, creates the
          annotated tag submission-N on HEAD, and prints the push commands.
          Nothing is pushed by this script.
@@ -31,9 +31,11 @@ README = ROOT / "README.md"
 START, END = "<!-- submissions:start -->", "<!-- submissions:end -->"
 
 
-def round_result(n: int) -> dict:
-    """Validation summary of round n's submitted method (not the noisy input)."""
-    d = round_dir(n)
+def round_result(n: int, split: str = "validation") -> dict:
+    """Summary of round n's submitted method (not the noisy input) on one split."""
+    d = round_dir(n) if split == "validation" else round_dir(n) / split
+    if not (d / "run_config.json").exists():
+        sys.exit(f"{d.relative_to(ROOT)} missing. Run:  python evaluate.py --round {n}")
     info = json.loads((d / "run_config.json").read_text(encoding="utf-8"))
     with open(d / "summary.csv", encoding="utf-8-sig") as f:
         rows = {r["method"]: r for r in csv.DictReader(f)}
@@ -46,31 +48,42 @@ def round_result(n: int) -> dict:
 
 
 def require_fingerprint(n: int) -> dict:
-    res = round_result(n)
+    """Validation and train results of round n, both scored with the current code."""
     now = fingerprint()
-    if res["fingerprint"] != now:
-        sys.exit(f"results/submissions/round{n}/ was scored with code {res['fingerprint']}, "
-                 f"current code is {now}.\nRe-run:  python evaluate.py --round {n}")
+    res = {}
+    for split in ("validation", "train"):
+        res[split] = round_result(n, split)
+        if res[split]["fingerprint"] != now:
+            sys.exit(f"round {n} {split} results were scored with code "
+                     f"{res[split]['fingerprint']}, current code is {now}.\n"
+                     f"Re-run:  python evaluate.py --round {n}")
     return res
 
 
 def render_table(data: dict) -> str:
     lines = [f"팀명: **{data['team']}** · 저장소: {data['repository']}", "",
              "| 회차 | 태그 | 커밋 | 런어스 제출일 | 방법 | Validation PESQ | Validation SNR (dB) "
-             "| 히든 테스트 PESQ |",
-             "|---|---|---|---|---|---|---|---|"]
+             "| Train PESQ | Train SNR (dB) | 히든 테스트 PESQ |",
+             "|---|---|---|---|---|---|---|---|---|---|"]
     for r in sorted(data["rounds"], key=lambda r: r["round"]):
-        v = r.get("validation", {})
+        v = r.get("validation") or {}
+        tr = r.get("train") or {}
         lb = r.get("leaderboard") or {}
-        lines.append("| {round} | `{tag}` | {commit} | {sub} | {method} | {pesq} | {snr} | {lb} |".format(
-            round=r["round"], tag=r["tag"],
-            commit=f"`{r['commit'][:7]}`" if r.get("commit") else "태그 참조",
-            sub=r.get("submitted_at") or "-", method=r.get("method_summary") or v.get("method", ""),
-            pesq=f"{v['pesq']:.3f}" if v else "-", snr=f"{v['snr_db']:.2f}" if v else "-",
-            lb=f"{lb['pesq']:.3f}" if lb.get("pesq") is not None else "-"))
+        lines.append("| {round} | `{tag}` | {commit} | {sub} | {method} | {pesq} | {snr} "
+                     "| {tpesq} | {tsnr} | {lb} |".format(
+                         round=r["round"], tag=r["tag"],
+                         commit=f"`{r['commit'][:7]}`" if r.get("commit") else "태그 참조",
+                         sub=r.get("submitted_at") or "-",
+                         method=r.get("method_summary") or v.get("method", ""),
+                         pesq=f"{v['pesq']:.3f}" if v else "-",
+                         snr=f"{v['snr_db']:.2f}" if v else "-",
+                         tpesq=f"{tr['pesq']:.3f}" if tr else "-",
+                         tsnr=f"{tr['snr_db']:.2f}" if tr else "-",
+                         lb=f"{lb['pesq']:.3f}" if lb.get("pesq") is not None else "-"))
     lines += ["", "평가할 코드 버전 = 해당 회차 **태그**가 가리키는 커밋 "
-              "(`git checkout <태그>`). 회차별 Validation 결과: "
-              "[`results/submissions/`](results/submissions/)"]
+              "(`git checkout <태그>`). Validation 164개·Train 1,296개 전체의 파일별 평균이며, "
+              "회차별 상세 결과: [`results/submissions/`](results/submissions/) "
+              "(train은 `roundN/train/`)"]
     return "\n".join(lines)
 
 
@@ -102,14 +115,17 @@ def main(argv=None):
     data["team"] = data.get("team") or TEAM
 
     if args.cmd == "prepare":
-        res = require_fingerprint(args.round)
+        both = require_fingerprint(args.round)
+        res = both["validation"]
+        keys = ("method", "files", "pesq", "snr_db")
         r = get_round(data, args.round)
         if r is None:
             r = {"round": args.round}
             data["rounds"].append(r)
         r.update({"tag": tag_name(args.round), "config": "configs/submission.json",
                   "results": f"results/submissions/round{args.round}/",
-                  "validation": {k: res[k] for k in ("method", "files", "pesq", "snr_db")},
+                  "validation": {k: res[k] for k in keys},
+                  "train": {k: both["train"][k] for k in keys},
                   "code_fingerprint": res["fingerprint"]})
         if args.summary:
             r["method_summary"] = args.summary
@@ -118,8 +134,9 @@ def main(argv=None):
         r.setdefault("leaderboard", None)
         save_submissions(data)
         write_readme(data)
-        print(f"round {args.round} recorded: {res['method']} PESQ {res['pesq']:.4f} "
-              f"SNR {res['snr_db']:.2f} dB\nNext: commit, then  python tools/release.py tag "
+        print(f"round {args.round} recorded: {res['method']} validation PESQ {res['pesq']:.4f} "
+              f"SNR {res['snr_db']:.2f} dB, train PESQ {both['train']['pesq']:.4f} "
+              f"SNR {both['train']['snr_db']:.2f} dB\nNext: commit, then  python tools/release.py tag "
               f"{args.round}")
 
     elif args.cmd == "tag":

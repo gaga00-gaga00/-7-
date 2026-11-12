@@ -49,8 +49,6 @@ def test_enhance_keeps_length_and_is_finite(method, sr):
 def test_very_short_input(n):
     x = noisy_speechlike(n, 16000)
     for m in METHODS:
-        if m == "basic_filter" and n < 2:
-            continue
         y = enhance(x, 16000, m, DEFAULT)
         assert y.shape == x.shape and np.isfinite(y).all()
 
@@ -100,3 +98,25 @@ def test_actually_reduces_noise():
     noisy = clean + 0.05 * rng.standard_normal(t.size)
     y = enhance(noisy, sr, "mmse_lsa")
     assert np.sum((y - clean) ** 2) < 0.5 * np.sum((noisy - clean) ** 2)
+
+
+@pytest.mark.parametrize("override", [
+    {"hop_sec": 0.05}, {"noise_fraction": 0.0}, {"dd_alpha": 1.0},
+    {"lsa_gain_floor": 1.5}, {"highpass_hz": 5000.0}, {"bandstop_hz": [1050.0, 950.0]},
+    {"filter_order": 0}, {"basic_stages": ["notch"]},
+])
+def test_config_rejects_invalid_parameters(override):
+    with pytest.raises(ValueError):
+        DEFAULT.with_overrides(**override)
+
+
+def test_basic_filter_is_its_stages_in_order():
+    from nr.methods import butterworth_stages
+    x = noisy_speechlike(16000, 16000)
+    y = x
+    for stage in ("highpass", "lowpass", "bandstop"):
+        y = enhance(y, 16000, stage, DEFAULT)
+    assert np.allclose(enhance(x, 16000, "basic_filter", DEFAULT), y)
+    only_lp = DEFAULT.with_overrides(basic_stages=["lowpass"])
+    assert np.allclose(enhance(x, 16000, "basic_filter", only_lp),
+                       butterworth_stages(x, 16000, DEFAULT, ("lowpass",)))

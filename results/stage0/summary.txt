@@ -1,0 +1,60 @@
+train/s400: 400 files, 16-bit WAV round trip
+
+noisy        1.4568
+S1_base      1.7100
+S2_strong    1.6475
+S3_weak      1.7233
+S4_lowcut    1.5729
+oracle       1.8137
+
+best single setting : S3_weak 1.7233
+oracle upper bound  : 1.8137
+gap                 : 0.0904  (SE 0.0064)
+
+paired difference vs S3_weak (mean, SE)
+  S1_base    -0.0133  0.0088
+  S2_strong  -0.0758  0.0121
+  S3_weak    +0.0000  0.0000
+  S4_lowcut  -0.1504  0.0161
+
+oracle pick counts
+oracle_pick
+S1_base       98
+S2_strong     62
+S3_weak      169
+S4_lowcut     71
+
+by target_snr_db
+                 n  noisy  S1_base  S2_strong  S3_weak  S4_lowcut  oracle    gap
+target_snr_db                                                                   
+0.0             37  1.132    1.175      1.158    1.167      1.231   1.247  0.080
+5.0             92  1.273    1.470      1.433    1.448      1.450   1.541  0.093
+10.0           131  1.380    1.629      1.579    1.626      1.508   1.726  0.100
+15.0           140  1.736    2.085      1.982    2.142      1.804   2.225  0.082
+
+by noise_category
+                       n  noisy  S1_base  S2_strong  S3_weak  S4_lowcut  oracle    gap
+noise_category                                                                        
+aircraft_cockpit      34  1.171    1.603      1.513    1.433      1.457   1.619  0.186
+alarm_siren           58  1.396    1.641      1.658    1.630      1.493   1.727  0.097
+animal                12  1.591    1.609      1.586    1.682      1.473   1.721  0.040
+bell                   5  1.521    1.485      1.538    1.600      1.323   1.611  0.011
+broadband_noise       23  1.170    1.610      1.519    1.458      1.433   1.639  0.180
+clap                   1  1.188    1.204      1.211    1.220      1.170   1.220  0.000
+click                  1  2.327    1.718      1.591    1.898      1.737   1.898  0.000
+destroyer_engine      10  1.358    1.667      1.583    1.673      1.493   1.722  0.049
+destroyer_operations  11  1.405    1.737      1.617    1.726      1.620   1.812  0.086
+door_moving            1  1.413    1.237      1.201    1.288      1.200   1.288  0.000
+factory               12  1.555    1.966      1.814    1.983      1.709   2.041  0.057
+footsteps              2  1.627    1.768      1.775    1.869      1.612   1.869  0.000
+hf_channel            12  1.211    1.588      1.500    1.450      1.403   1.598  0.148
+machine               81  1.435    1.699      1.639    1.739      1.600   1.816  0.077
+machine_gun            1  1.835    1.775      1.794    1.928      1.352   1.928  0.000
+military_vehicle      11  1.622    1.910      1.832    2.000      1.891   2.174  0.174
+phone_dialing         13  2.247    2.379      2.295    2.471      2.219   2.594  0.124
+shower                 1  1.264    1.898      1.933    1.616      1.758   1.933  0.317
+tooth_brushing         1  1.160    1.144      1.154    1.201      1.082   1.201  0.000
+traffic_vehicle       24  1.529    1.734      1.668    1.823      1.576   1.870  0.046
+vehicle_interior       5  2.921    2.855      2.576    3.212      2.235   3.257  0.045
+water                 18  1.440    1.474      1.466    1.568      1.401   1.592  0.025
+wind                  63  1.479    1.710      1.618    1.771      1.599   1.831  0.060

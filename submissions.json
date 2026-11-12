@@ -13,11 +13,17 @@
         "pesq": 1.7177,
         "snr_db": 13.294
       },
-      "code_fingerprint": "7dd0bb6acae9",
+      "code_fingerprint": "41cd8ee28b33",
       "method_summary": "MMSE-LSA + decision-directed SNR, 최저 에너지 프레임 잡음 추정",
       "commit": null,
       "submitted_at": null,
-      "leaderboard": null
+      "leaderboard": null,
+      "train": {
+        "method": "mmse_lsa",
+        "files": 1296,
+        "pesq": 1.7218,
+        "snr_db": 12.907
+      }
     }
   ],
   "challenge": "2026 신호 및 시스템 1차 챌린지 - 전통적 신호 처리 기반 음성 잡음 제거",

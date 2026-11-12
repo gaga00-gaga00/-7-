@@ -113,3 +113,21 @@ def test_build_ai_usage_produces_valid_hwpx(tmp_path):
                   "Part 6. 분석 및 고찰", "Part 7. 종합 고찰"):
         assert title in xml
     assert "사례1: t" in xml and "(  7  ) 조" in xml
+
+
+@pytest.mark.parametrize("argv", [
+    ["--split", "all", "--subset", "quick"],
+    ["--round", "1", "--split", "train"],
+    ["--round", "1", "--set", "lsa_gain_floor=0.1"],
+])
+def test_evaluate_rejects_partial_round_or_subset_of_all(argv):
+    import evaluate
+    with pytest.raises(SystemExit):
+        evaluate.main(argv)
+
+
+def test_ai_usage_reads_round_train_results():
+    if not (ROOT / "results" / "submissions" / "round1" / "train" / "summary.csv").exists():
+        pytest.skip("round 1 train results not generated")
+    v = build_ai_usage.result_value("round1/train", "mmse_lsa")
+    assert v["n"] == 1296

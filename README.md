@@ -10,11 +10,11 @@
 <!-- submissions:start -->
 팀명: **7조** · 저장소: https://github.com/gaga00-gaga00/-7-
 
-| 회차 | 태그 | 커밋 | 런어스 제출일 | 방법 | Validation PESQ | Validation SNR (dB) | 히든 테스트 PESQ |
-|---|---|---|---|---|---|---|---|
-| 1 | `submission-1` | 태그 참조 | - | MMSE-LSA + decision-directed SNR, 최저 에너지 프레임 잡음 추정 | 1.718 | 13.29 | - |
+| 회차 | 태그 | 커밋 | 런어스 제출일 | 방법 | Validation PESQ | Validation SNR (dB) | Train PESQ | Train SNR (dB) | 히든 테스트 PESQ |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | `submission-1` | 태그 참조 | - | MMSE-LSA + decision-directed SNR, 최저 에너지 프레임 잡음 추정 | 1.718 | 13.29 | 1.722 | 12.91 | - |
 
-평가할 코드 버전 = 해당 회차 **태그**가 가리키는 커밋 (`git checkout <태그>`). 회차별 Validation 결과: [`results/submissions/`](results/submissions/)
+평가할 코드 버전 = 해당 회차 **태그**가 가리키는 커밋 (`git checkout <태그>`). Validation 164개·Train 1,296개 전체의 파일별 평균이며, 회차별 상세 결과: [`results/submissions/`](results/submissions/) (train은 `roundN/train/`)
 <!-- submissions:end -->
 
 ## 실행 방법 (제출 코드)
@@ -66,14 +66,19 @@ PESQ는 강의 노트북과 동일하게 `pesq==0.0.4`, wideband 모드, 정규�
 conda env create -f environment.yml && conda activate denoise    # pesq 0.0.4 포함
 python -m pytest -q                                              # 입출력 계약 테스트
 python evaluate.py --split train --subset quick --tag test       # 빠른 튜닝 (train 200개)
-python evaluate.py --tag test                                    # validation 전체
+python evaluate.py --split train --tag test                      # train 전체 1,296개로 후보 확인
+python evaluate.py --tag test                                    # validation 전체 164개로 최종 확인
+python evaluate.py --split all --tag test                        # train + validation 한 번에
 python compare.py <runA> <runB>                                  # 두 실행 파일별 비교
 python tools/spectrogram.py <segment_id> --config configs/X.json # 스펙트로그램 + 청취용 WAV
+python tools/explore_dataset.py                                  # 데이터 분포 요약
+python tools/export_enhanced.py --methods wiener_filter mmse_lsa # split 전체 결과 WAV
 python tools/check_submission.py --round N                       # 제출 전 확인 (7개 항목)
 ```
 
 데이터(`train/`, `validation/`)는 저장소에 포함하지 않습니다. 배포받은 폴더를 저장소 루트에 두세요.
-Train으로 알고리즘·파라미터를 정하고, Validation으로 비교·확인합니다.
+Train으로 알고리즘·파라미터를 정하고(빠른 튜닝 200개 → 전체 1,296개), Validation 164개로 비교·확인합니다.
+제출 회차마다 Train 1,296개와 Validation 164개 **전체**의 결과를 저장합니다(`python evaluate.py --round N`).
 
 | 경로 | 내용 |
 |---|---|
@@ -82,7 +87,8 @@ Train으로 알고리즘·파라미터를 정하고, Validation으로 비교·�
 | `configs/` | 메소드·파라미터 설정 (`submission.json` = 제출 버전) |
 | `evaluate.py`, `compare.py` | 평가, 실행 간 비교 |
 | `submissions.json` | 회차별 제출 기록 (태그, 커밋, 점수) |
-| `tests/`, `tools/` | 테스트, 제출 점검·태그·스펙트로그램·내역서 도구 |
+| `tests/`, `tools/` | 테스트, 제출 점검·태그·스펙트로그램·데이터 탐색·내역서 도구 |
+| `notebooks/workbench.ipynb` | Colab/Jupyter에서 샘플을 골라 방법별 스펙트로그램·청취 비교, 평가 실행 |
 | `results/` | 실험 로그, 회차별 제출 버전 결과 |
 | `docs/references.json` | 확인한 참고 문헌 (제목·저자·연도·DOI·참고 내용) |
 

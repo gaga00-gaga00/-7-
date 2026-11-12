@@ -1,6 +1,6 @@
 # Course data (not ours to redistribute; large)
-train/
-validation/
+/train/
+/validation/
 *.zip
 figures/
 *.ipynb
@@ -17,6 +17,7 @@ docs/ai_usage/
 
 # Per-run evaluation outputs (experiments.csv and submission/ ARE committed)
 results/runs/
+results/enhanced/
 
 # Python / tools
 __pycache__/

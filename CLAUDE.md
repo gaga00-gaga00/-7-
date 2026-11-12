@@ -21,18 +21,24 @@ conda 환경 `denoise` (Python 3.12, conda-forge, pesq 0.0.4 — 조교 노트�
 |---|---|
 | 테스트 | `python -m pytest -q` |
 | 빠른 튜닝 (train 200개 층화) | `python evaluate.py --split train --subset quick --config configs/X.json --tag T` |
-| 검증 | `python evaluate.py --config configs/X.json --tag T` |
+| 후보 확인 (train 전체 1,296개) | `python evaluate.py --split train --config configs/X.json --tag T` |
+| 검증 (validation 전체 164개) | `python evaluate.py --config configs/X.json --tag T` |
+| train + validation 한 번에 (split별 집계) | `python evaluate.py --split all --config configs/X.json --tag T` |
 | 파라미터 하나 바꿔 보기 | `python evaluate.py ... --set lsa_gain_floor=0.1` |
 | 두 실행 비교 | `python compare.py <runA> <runB> [--method-a M --method-b M]` |
-| 스펙트로그램·청취 WAV | `python tools/spectrogram.py --pick worst --n 3` / `<segment_id> --config A.json --compare B.json` |
-| N회차 제출 결과 저장 | `python evaluate.py --round N` → `results/submissions/roundN/` |
+| 스펙트로그램·청취 WAV | `python tools/spectrogram.py --pick worst --n 3` / `<segment_id> --config A.json --compare B.json` / `<id> --methods m1 m2 --added-noise` / `--noisy any.wav [--clean ref.wav]` |
+| 데이터 개요 (분할·잡음·SNR 분포) | `python tools/explore_dataset.py` |
+| split 전체 결과 WAV 저장 | `python tools/export_enhanced.py [--methods ...] [--split train --subset quick]` → `results/enhanced/` |
+| 대화형 청취·비교 (Colab/Jupyter) | `notebooks/workbench.ipynb` (Colab: 저장소 clone + Drive 데이터 링크) |
+| N회차 제출 결과 저장 | `python evaluate.py --round N` → validation 164개 `results/submissions/roundN/` + train 1,296개 `roundN/train/` |
 | 제출 기록·README 표 | `python tools/release.py prepare N --summary "..."` → 커밋 → `release.py tag N` |
 | 제출 전 확인 (공지 7항목) | `python tools/check_submission.py --round N --python "py -3.13"` |
 | 참고 문헌 DOI 확인 | `python tools/check_refs.py --write` |
 | AI 활용 내역서 | `python tools/build_ai_usage.py docs/ai_usage/roundN.json [--check]` |
 
 ## 구조
-- `nr/` 알고리즘: `config.py`(Config 데이터클래스, 모든 파라미터), `stft.py`, `noise.py`(잡음 PSD 추정기), `methods.py`(METHODS 레지스트리, `enhance`)
+- `nr/` 알고리즘: `config.py`(Config 데이터클래스, 모든 파라미터, 생성 시 범위·NOLA 검증), `stft.py`, `noise.py`(잡음 PSD 추정기), `methods.py`(METHODS 레지스트리, `enhance`; 강의 베이스라인 + 개별 lowpass/highpass/bandstop + mmse_lsa)
+- 강의 배포 노트북(`dataset_exploration.ipynb`, `noise_reduction_baselines.ipynb`, 루트, git 제외)의 코드는 모두 이식됨: 알고리즘 → `nr/`, 평가(manifest 검증, PESQ 오류 기록, 공통 부분집합) → `evaluate.py`, 탐색 → `tools/explore_dataset.py`, show_example/inspect_sample → `tools/spectrogram.py`, export_enhanced → `tools/export_enhanced.py`, 위젯 브라우저 → `notebooks/workbench.ipynb`. 노트북에 알고리즘을 따로 두지 말 것.
 - `configs/submission.json` 제출 버전 메소드·파라미터 (denoise.py 기본값). 실험용 config는 `configs/`에 추가.
 - `submissions.json` 회차별 제출 기록(태그, 커밋, 제출일, validation·히든 점수) → README `<!-- submissions -->` 표는 `release.py`가 생성. 직접 편집 금지.
 - `results/experiments.csv` 모든 실행 로그(커밋함). `results/runs/` 실행별 상세(무시). `results/submissions/roundN/` 회차별 제출 버전 validation 결과(커밋함, `code_fingerprint`로 코드와 대조). `results/figures/` 스펙트로그램(무시).
@@ -42,13 +48,13 @@ conda 환경 `denoise` (Python 3.12, conda-forge, pesq 0.0.4 — 조교 노트�
 
 ## 실험 프로토콜
 1. 새 아이디어는 `nr/`에 메소드/추정기로 추가하고 `METHODS`에 등록, 파라미터는 `Config`에 필드로.
-2. train quick에서 튜닝 → validation 전체로 확인. `--note`에 무엇을 바꿨는지 기록.
+2. 데이터는 전부 쓴다: **train quick(200)으로 빠르게 튜닝 → train 전체(1,296)로 후보 확인 → validation 전체(164)로 최종 확인.** 파라미터는 train에서 고르고 validation은 확인용(validation에 맞춰 고르지 않기). `--note`에 무엇을 바꿨는지 기록.
 3. `compare.py`로 잡음 종류·SNR별 손해 보는 그룹이 없는지 확인 (평균만 보지 말 것). `spectrogram.py`로 손해 본 파일을 보고 듣는다.
 4. `pytest` 통과 후 커밋.
 
 ## 제출 절차 (팀당 주 1회, 최초 제출은 횟수 제외, 막바지 완화는 별도 공지)
 1. `pytest` 통과 → `configs/submission.json` 갱신
-2. `evaluate.py --round N` → `release.py prepare N --summary "..."` (README 알고리즘·결과 표도 손으로 갱신)
+2. `evaluate.py --round N` (train 1,296 + validation 164 전체, 약 2분) → `release.py prepare N --summary "..."` (README 알고리즘·결과 표도 손으로 갱신)
 3. `docs/ai_usage/roundN.json` 작성(최초: 접근 방법 / 이후: 이전 회차 대비 개선 변화, results.rows에 `round{N-1}` vs `roundN`) → `build_ai_usage.py`
 4. 커밋 → `release.py tag N` → **사용자 확인 후** `git push origin main` + `git push origin submission-N`
 5. `check_submission.py --round N` → READY

@@ -192,16 +192,24 @@ def check_version_info(round_no: int, code_dir: Path, rep: Report):
         problems.append(f"README 제출 정보 표에 {tag} 없음")
     rep.add("5c. README에 팀명·제출 회차·태그 명시", PASS if not problems else FAIL,
             "\n".join(problems))
-    saved = round_dir(round_no) / "run_config.json"
-    if saved.exists():
-        fp_saved = json.loads(saved.read_text(encoding="utf-8")).get("code_fingerprint")
-        fp_code = fingerprint(code_dir)
-        rep.add("5d. 저장된 Validation 결과가 제출 코드로 만든 것인가", PASS if fp_saved == fp_code
-                else FAIL, f"결과 {fp_saved} / 코드 {fp_code}"
-                + ("" if fp_saved == fp_code else f" → python evaluate.py --round {round_no}"))
-    else:
-        rep.add("5d. 저장된 Validation 결과가 제출 코드로 만든 것인가", FAIL,
-                f"results/submissions/round{round_no}/ 없음")
+    fp_code = fingerprint(code_dir)
+    item = "5d. 저장된 Validation·Train 전체 결과가 제출 코드로 만든 것인가"
+    problems = []
+    for split, folder in (("validation", round_dir(round_no)),
+                          ("train", round_dir(round_no) / "train")):
+        saved = folder / "run_config.json"
+        if not saved.exists():
+            problems.append(f"{split}: {folder.relative_to(ROOT)} 없음")
+            continue
+        info = json.loads(saved.read_text(encoding="utf-8"))
+        if info.get("code_fingerprint") != fp_code:
+            problems.append(f"{split}: 결과 {info.get('code_fingerprint')} / 코드 {fp_code}")
+        expected = len(list((ROOT / split / "noisy").glob("*.wav")))
+        if info.get("subset") != "all" or (expected and info.get("files") != expected):
+            problems.append(f"{split}: {info.get('files')}개만 평가됨 (전체 {expected}개)")
+    rep.add(item, PASS if not problems else FAIL,
+            f"코드 {fp_code}" if not problems else
+            "\n".join(problems) + f"\n→ python evaluate.py --round {round_no}")
 
 
 def check_ai_usage(round_no: int, rep: Report):
