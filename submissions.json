@@ -1,0 +1,25 @@
+{
+  "team": "7조",
+  "repository": "https://github.com/gaga00-gaga00/-7-",
+  "rounds": [
+    {
+      "round": 1,
+      "tag": "submission-1",
+      "config": "configs/submission.json",
+      "results": "results/submissions/round1/",
+      "validation": {
+        "method": "mmse_lsa",
+        "files": 164,
+        "pesq": 1.7177,
+        "snr_db": 13.294
+      },
+      "code_fingerprint": "7dd0bb6acae9",
+      "method_summary": "MMSE-LSA + decision-directed SNR, 최저 에너지 프레임 잡음 추정",
+      "commit": null,
+      "submitted_at": null,
+      "leaderboard": null
+    }
+  ],
+  "challenge": "2026 신호 및 시스템 1차 챌린지 - 전통적 신호 처리 기반 음성 잡음 제거",
+  "deadline": "2026-11-17 23:59"
+}

@@ -1,0 +1,38 @@
+[
+  {
+    "id": "boll1979",
+    "authors": "S. F. Boll",
+    "title": "Suppression of acoustic noise in speech using spectral subtraction",
+    "venue": "IEEE Transactions on Acoustics, Speech, and Signal Processing, vol. 27, no. 2, pp. 113-120",
+    "year": 1979,
+    "doi": "10.1109/TASSP.1979.1163209",
+    "url": "https://doi.org/10.1109/TASSP.1979.1163209",
+    "used_for": "Spectral Subtraction 베이스라인: 잡음 파워 스펙트럼을 빼고 음수는 하한(spectral floor)으로 막는 방식, 과감산 계수 α",
+    "doi_verified": "2026-11-12",
+    "checked_by": null
+  },
+  {
+    "id": "ephraim1984",
+    "authors": "Y. Ephraim, D. Malah",
+    "title": "Speech enhancement using a minimum-mean square error short-time spectral amplitude estimator",
+    "venue": "IEEE Transactions on Acoustics, Speech, and Signal Processing, vol. 32, no. 6, pp. 1109-1121",
+    "year": 1984,
+    "doi": "10.1109/TASSP.1984.1164453",
+    "url": "https://doi.org/10.1109/TASSP.1984.1164453",
+    "used_for": "사전 SNR(ξ)·사후 SNR(γ) 정의와 decision-directed 사전 SNR 추정식 ξ = α·|X̂(l-1)|²/λ_d + (1-α)·max(γ-1, 0), α = 0.98",
+    "doi_verified": "2026-11-12",
+    "checked_by": null
+  },
+  {
+    "id": "ephraim1985",
+    "authors": "Y. Ephraim, D. Malah",
+    "title": "Speech enhancement using a minimum mean-square error log-spectral amplitude estimator",
+    "venue": "IEEE Transactions on Acoustics, Speech, and Signal Processing, vol. 33, no. 2, pp. 443-445",
+    "year": 1985,
+    "doi": "10.1109/TASSP.1985.1164550",
+    "url": "https://doi.org/10.1109/TASSP.1985.1164550",
+    "used_for": "MMSE-LSA 이득 함수 G = ξ/(1+ξ)·exp(½·E1(v)), v = ξγ/(1+ξ) (제출 1회차의 핵심 이득 함수)",
+    "doi_verified": "2026-11-12",
+    "checked_by": null
+  }
+]

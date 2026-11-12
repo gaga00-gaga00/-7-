@@ -7,11 +7,13 @@
 Each output keeps the input's file name (and sub-folder), sample rate, channel
 count, sample count and sample format (e.g. PCM_16). Multi-channel files are
 processed channel by channel. Algorithm parameters come from
-configs/submission.json unless --config is given.
+configs/submission.json unless --config is given. If a file cannot be
+processed, it is copied unchanged so that every input still has an output.
 """
 from __future__ import annotations
 
 import argparse
+import shutil
 import sys
 from pathlib import Path
 
@@ -59,18 +61,26 @@ def main(argv=None) -> int:
         print(f"No WAV files in {src_root}", file=sys.stderr)
         return 1
 
-    failed = 0
+    passed_through, failed = 0, 0
     for i, src in enumerate(files, 1):
         dst = args.output / src.relative_to(src_root)
         try:
             denoise_file(src, dst, method, cfg)
-        except Exception as e:  # keep going; report at the end
-            failed += 1
-            print(f"[FAIL] {src.name}: {type(e).__name__}: {e}", file=sys.stderr)
+        except Exception as e:
+            # Every input must get an output: fall back to the unprocessed file.
+            print(f"[WARN] {src.name}: {type(e).__name__}: {e} -> copied unprocessed",
+                  file=sys.stderr)
+            try:
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(src, dst)
+                passed_through += 1
+            except Exception as e2:
+                failed += 1
+                print(f"[FAIL] {src.name}: {type(e2).__name__}: {e2}", file=sys.stderr)
         if i % 50 == 0 or i == len(files):
             print(f"{i}/{len(files)} done", flush=True)
-    print(f"method={method}  ok={len(files) - failed}  failed={failed}  "
-          f"-> {args.output.resolve()}")
+    print(f"method={method}  denoised={len(files) - passed_through - failed}  "
+          f"unprocessed={passed_through}  failed={failed}  -> {args.output.resolve()}")
     return 1 if failed else 0
 
 

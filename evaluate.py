@@ -7,7 +7,8 @@ plain mean over files. Clean speech is used only here, never in denoise.py.
     python evaluate.py --split train --subset quick        # fast tuning set (~200 files)
     python evaluate.py --methods noisy_input basic_filter spectral_subtraction wiener_filter mmse_lsa
     python evaluate.py --config configs/xxx.json --set lsa_gain_floor=0.1 --tag floor01
-    python evaluate.py --out results/submission            # refresh submitted-version results
+    python evaluate.py --round 2                           # results of submission round 2
+                                                           # -> results/submissions/round2/
 
 Each run writes results/runs/<run_id>/ (per-file CSV, breakdowns, config) and
 appends one line per method to results/experiments.csv.
@@ -32,6 +33,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
 from nr import DEFAULT, enhance, load_config  # noqa: E402
+from tools.common import fingerprint, round_dir  # noqa: E402
 
 SUBMISSION = HERE / "configs" / "submission.json"
 LOG = HERE / "results" / "experiments.csv"
@@ -89,6 +91,13 @@ def git_commit():
         return "no-git"
 
 
+def config_label(config: Path | None, methods) -> str:
+    if config is None:
+        return "defaults (nr/config.py)" if methods else "configs/submission.json"
+    p = config.resolve()
+    return p.relative_to(HERE).as_posix() if p.is_relative_to(HERE) else str(config)
+
+
 def load_manifest(root: Path, split: str, subset: str | None) -> pd.DataFrame:
     m = pd.read_csv(root / split / "samples.csv", encoding="utf-8-sig")
     if subset:
@@ -111,7 +120,17 @@ def main(argv=None):
     ap.add_argument("--tag", default="", help="short label for this run")
     ap.add_argument("--note", default="", help="free-text note saved in the experiment log")
     ap.add_argument("--out", type=Path, help="write results here instead of results/runs/<id>")
+    ap.add_argument("--round", type=int,
+                    help="submission round N: validation, all files, submission config, "
+                         "written to results/submissions/roundN/")
     args = ap.parse_args(argv)
+    if args.round is not None:
+        if args.split != "validation" or args.subset or args.limit or args.set or args.methods                 or (args.config and args.config.resolve() != SUBMISSION.resolve()):
+            ap.error("--round always scores configs/submission.json on the full validation set")
+        args.config = SUBMISSION
+        args.out = args.out or round_dir(args.round)
+        args.tag = args.tag or f"round{args.round}"
+        args.note = args.note or f"submission round {args.round}"
 
     if args.config or not args.methods:
         cfg_method, cfg = load_config(args.config or SUBMISSION)
@@ -159,7 +178,10 @@ def main(argv=None):
         tab.to_csv(out_dir / f"pesq_by_{g}.csv", encoding="utf-8-sig")
         tables[g] = tab
     commit = git_commit()
-    run_info = {"run_id": run_id, "git_commit": commit, "split": args.split,
+    run_info = {"run_id": run_id, "git_commit": commit,
+                "code_fingerprint": fingerprint(HERE),
+                "config_file": config_label(args.config, args.methods),
+                "round": args.round, "split": args.split,
                 "subset": args.subset or "all", "files": len(manifest), "methods": methods,
                 "config": cfg.to_dict(), "note": args.note, "elapsed_sec": round(elapsed, 1),
                 "pesq": "wb, 16 kHz, pesq==0.0.4, no normalisation",

@@ -1,6 +1,9 @@
 {
-  "run_id": "20261112-193239_submission",
-  "git_commit": "0ebc378+dirty",
+  "run_id": "20261112-204111_round1",
+  "git_commit": "b606b78+dirty",
+  "code_fingerprint": "7dd0bb6acae9",
+  "config_file": "configs/submission.json",
+  "round": 1,
   "split": "validation",
   "subset": "all",
   "files": 164,
@@ -26,8 +29,8 @@
     "lsa_xi_min_db": -25.0,
     "lsa_gain_floor": 0.05
   },
-  "note": "submission v1 candidate",
-  "elapsed_sec": 9.1,
+  "note": "submission round 1",
+  "elapsed_sec": 9.4,
   "pesq": "wb, 16 kHz, pesq==0.0.4, no normalisation",
   "aggregation": "unweighted mean over files"
 }
