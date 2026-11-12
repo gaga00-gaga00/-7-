@@ -1,0 +1,18 @@
+# Development environment (same as the course notebook's recommendation).
+#   conda env create -f environment.yml
+#   conda activate denoise
+name: denoise
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - numpy
+  - scipy
+  - pysoundfile
+  - pandas
+  - pesq=0.0.4
+  - pytest
+  - matplotlib
+  - notebook
+  - ipywidgets
+  - tqdm

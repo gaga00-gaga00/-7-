@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(conda run --no-capture-output -n denoise python evaluate.py:*)",
+      "Bash(conda run --no-capture-output -n denoise python compare.py:*)",
+      "Bash(conda run --no-capture-output -n denoise python -m pytest:*)",
+      "Bash(conda run --no-capture-output -n denoise python denoise.py:*)",
+      "Bash(conda run --no-capture-output -n denoise python tools/make_quick_subset.py:*)",
+      "Bash(PYTHONIOENCODING=utf-8 conda run --no-capture-output -n denoise python evaluate.py:*)",
+      "Bash(PYTHONIOENCODING=utf-8 conda run --no-capture-output -n denoise python compare.py:*)",
+      "Bash(PYTHONIOENCODING=utf-8 conda run --no-capture-output -n denoise python -m pytest:*)",
+      "Bash(PYTHONIOENCODING=utf-8 conda run --no-capture-output -n denoise python denoise.py:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)"
+    ]
+  }
+}

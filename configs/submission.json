@@ -1,0 +1,12 @@
+{
+  "description": "Submission v1: MMSE-LSA + decision-directed a-priori SNR, lowest-energy-frame noise PSD",
+  "method": "mmse_lsa",
+  "params": {
+    "win_sec": 0.032,
+    "hop_sec": 0.008,
+    "noise_fraction": 0.2,
+    "dd_alpha": 0.98,
+    "lsa_xi_min_db": -25.0,
+    "lsa_gain_floor": 0.05
+  }
+}

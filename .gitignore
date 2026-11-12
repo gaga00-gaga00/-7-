@@ -1,0 +1,30 @@
+# Course data (not ours to redistribute; large)
+train/
+validation/
+*.zip
+figures/
+*.ipynb
+!notebooks/*.ipynb
+
+# Submission I/O folders: keep the folders, not the audio
+input/*
+!input/.gitkeep
+output/*
+!output/.gitkeep
+
+# AI usage reports are submitted privately (Learn Us secret post), never published here
+docs/ai_usage/
+
+# Per-run evaluation outputs (experiments.csv and submission/ ARE committed)
+results/runs/
+
+# Python / tools
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+.ipynb_checkpoints/
+.claude/settings.local.json
+
+# Office temp files
+~$*

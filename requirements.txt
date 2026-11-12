@@ -1,0 +1,4 @@
+# Needed to run denoise.py (the submission)
+numpy>=1.26,<3
+scipy>=1.12,<2
+soundfile>=0.12,<1

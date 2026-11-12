@@ -1,0 +1,33 @@
+{
+  "run_id": "20261112-193239_submission",
+  "git_commit": "0ebc378+dirty",
+  "split": "validation",
+  "subset": "all",
+  "files": 164,
+  "methods": [
+    "noisy_input",
+    "mmse_lsa"
+  ],
+  "config": {
+    "win_sec": 0.032,
+    "hop_sec": 0.008,
+    "filter_order": 4,
+    "lowpass_hz": 3500.0,
+    "highpass_hz": 100.0,
+    "bandstop_hz": [
+      950.0,
+      1050.0
+    ],
+    "noise_fraction": 0.2,
+    "subtraction_alpha": 1.5,
+    "subtraction_floor": 0.02,
+    "dd_alpha": 0.98,
+    "wiener_gain_floor": 0.05,
+    "lsa_xi_min_db": -25.0,
+    "lsa_gain_floor": 0.05
+  },
+  "note": "submission v1 candidate",
+  "elapsed_sec": 9.1,
+  "pesq": "wb, 16 kHz, pesq==0.0.4, no normalisation",
+  "aggregation": "unweighted mean over files"
+}
