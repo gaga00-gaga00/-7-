@@ -62,5 +62,8 @@ conda 환경 `denoise` (Python 3.12, conda-forge, pesq 0.0.4 — 조교 노트�
 7. `release.py submitted N` (커밋 해시·제출일 기록), 리더보드 공개 후 `release.py leaderboard N --pesq X`
 
 ## 현재 기록 (validation PESQ-WB)
-noisy 1.395 · basic 1.449 · spectral subtraction 1.538 · Wiener 1.598 · **MMSE-LSA 1.718 (1회차, 아직 미제출)**
-약점: 0 dB / hard 잡음에서 개선 작음, 충격성 잡음(bell, click, clap)·고 SNR 파일에서 오히려 손해(약한 고주파 음성 깎임) → 시변 잡음 추정(MCRA/IMCRA, minimum statistics)이 다음 과제.
+noisy 1.395 · basic 1.449 · spectral subtraction 1.538 · Wiener 1.598 · MMSE-LSA 1.718 · SPP 추적 1.870 · 설정 혼합 1.941 · 배음 재생성 1.998 · **1회차 제출 버전(adaptive, `configs/submission.json`) 2.114 / train 2.080**
+- 제출 버전의 SNR은 5.85 dB로 입력(9.63 dB)보다 낮다(200 Hz 고역 통과의 대가, PESQ 우선으로 선택).
+- 기각한 것: 톤 궤적·충격음 프레임의 잡음 올리기(`nr/noise_modules.py`), 느린 추적, TSNR, 양방향 DD, 2차 잡음 재추정, phone_dialing 보정. 수치는 `results/stage2_train_all/`, `results/experiments.csv`.
+- 약점: 움직이는 톤(스윕형 사이렌)·충격음이 남음, 0 dB 파일 1.45, hard 잡음 개선 작음. 진단(`tools/diagnose_gap.py`)상 남은 손실은 이득 계산(음성 추정) 쪽이 크다.
+- 검증은 train 전체 1,296개 기준(부분집합은 빠른 탐색용).

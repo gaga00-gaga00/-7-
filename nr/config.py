@@ -59,6 +59,11 @@ class Config:
     omlsa_tsnr: bool = False      # two-step a-priori SNR refinement (Plapous et al. 2006)
     dd_combine: str = "forward"   # "forward" | "geomean" | "max": offline two-direction DD
     hrnr_weight: float = 0.0      # harmonic regeneration second gain (0 = off, 1 = full)
+    hrnr_mode: str = "halfwave"   # nonlinearity that regenerates harmonics: "halfwave" | "abs"
+    # second pass: re-estimate the noise PSD from the cells the first gain marks as
+    # speech-free (0 = off, 1 = use the refined PSD, between = geometric mix)
+    noise_refine: float = 0.0
+    noise_refine_tau_sec: float = 0.3
     # category-specific additions on top of the tracked noise PSD (nr/noise_modules.py);
     # weight 0 = off, so the defaults leave omlsa unchanged
     tone_weight: float = 0.0      # C1: lift the noise PSD along noise-tone tracks
@@ -80,6 +85,7 @@ class Config:
     # 300 Hz leaves a low residual whose rectification spreads harmonics into the
     # speech band. 1.5 = never (F6 <= 1).
     ad_hrnr_off_low_ratio: float = 1.5
+    ad_hrnr_flat_weight: float = -1.0  # hrnr_weight for the "fixed" membership (< 0: same)
 
     def __post_init__(self):
         """Reject inconsistent parameters early (checks from the course notebook)."""
@@ -119,6 +125,8 @@ class Config:
             raise ValueError("Invalid adaptive blend parameters.")
         if self.dd_combine not in ("forward", "geomean", "max") or not 0 <= self.hrnr_weight <= 1:
             raise ValueError("Invalid dd_combine / hrnr_weight.")
+        if self.hrnr_mode not in ("halfwave", "abs") or not 0 <= self.noise_refine <= 1                 or self.noise_refine_tau_sec < 0 or self.ad_hrnr_flat_weight > 1:
+            raise ValueError("Invalid hrnr_mode / noise_refine / ad_hrnr_flat_weight.")
         if self.noise_smooth_bins < 1 or int(self.noise_smooth_bins) != self.noise_smooth_bins:
             raise ValueError("noise_smooth_bins must be a positive integer.")
         if self.omlsa_smooth_bins < 1 or int(self.omlsa_smooth_bins) != self.omlsa_smooth_bins:

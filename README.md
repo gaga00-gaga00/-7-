@@ -12,7 +12,7 @@
 
 | 회차 | 태그 | 커밋 | 런어스 제출일 | 방법 | Validation PESQ | Validation SNR (dB) | Train PESQ | Train SNR (dB) | 히든 테스트 PESQ |
 |---|---|---|---|---|---|---|---|---|---|
-| 1 | `submission-1` | 태그 참조 | - | MMSE-LSA + decision-directed SNR, 최저 에너지 프레임 잡음 추정 | 1.718 | 13.29 | 1.722 | 12.91 | - |
+| 1 | `submission-1` | 태그 참조 | - | 입력 적응형 OM-LSA: SPP 잡음 추적 + LSA 이득 + 배음 재생성, 특징량 기반 설정 혼합, 200 Hz 고역 통과 | 2.114 | 5.85 | 2.080 | 5.63 | - |
 
 평가할 코드 버전 = 해당 회차 **태그**가 가리키는 커밋 (`git checkout <태그>`). Validation 164개·Train 1,296개 전체의 파일별 평균이며, 회차별 상세 결과: [`results/submissions/`](results/submissions/) (train은 `roundN/train/`)
 <!-- submissions:end -->
@@ -39,12 +39,19 @@ python denoise.py                   # ./input/*.wav  ->  ./output/*.wav
 
 ## 알고리즘 (제출 1회차)
 
-STFT(Hann 32 ms, hop 8 ms) 영역에서 **MMSE Log-Spectral Amplitude 추정기** (Ephraim & Malah, 1985)를 적용합니다.
+STFT(Hann 80 ms, hop 20 ms) 영역에서 칸마다 잡음 파워를 추정하고 이득을 곱하는 **입력 적응형 OM-LSA**입니다.
+입력은 noisy WAV 하나뿐이며, 학습된 모델·가중치·사전은 사용하지 않습니다. 모든 규칙과 임계값은 코드([`nr/`](nr/))와
+[`configs/submission.json`](configs/submission.json)에 들어 있습니다.
 
-1. 잡음 PSD: 프레임 에너지가 가장 낮은 20% 프레임의 평균 파워 (주파수 방향 3-bin 평활)
-2. 사후 SNR γ = |Y|² / λ_d, 사전 SNR ξ는 decision-directed 방식 (α = 0.98, 하한 −25 dB)
-3. 이득 G = ξ/(1+ξ) · exp(½·E1(ξγ/(1+ξ))), 하한 0.05
-4. 잡음 섞인 위상을 그대로 사용해 ISTFT (overlap-add)
+1. **잡음 PSD 추적**: 음성 존재 확률(SPP) 기반 MMSE 잡음 추정 (Gerkmann & Hendriks, 2012). 시간 순방향·역방향으로 추적해 기하평균
+2. **이득**: MMSE-LSA (Ephraim & Malah, 1985), decision-directed 사전 SNR (α = 0.96, 하한 −30 dB), OM-LSA 형태 (Cohen & Berdugo, 2001)
+3. **배음 재생성**: 1차 처리 결과를 전파 정류해 지워진 배음을 되살리고, 그것으로 사전 SNR을 다시 추정한 2차 이득을 1차 이득과 혼합 (Plapous 등, 2006의 방식)
+4. **입력에 따른 설정 혼합** ([`nr/blend.py`](nr/blend.py)): noisy 파형에서 계산한 특징량 두 개(잡음 스펙트럼 평탄도, 300 Hz 이하 저역 비중)에
+   시그모이드를 적용한 소속도(0~1)로 설정을 연속적으로 섞음 — 평탄한 잡음은 파일 고정 잡음 스펙트럼 쪽으로, 유색 잡음은 빠른 추적으로,
+   저역 잡음이 적으면 더 강한 억제로
+5. 완만한 200 Hz 고역 통과(2차 Butterworth, 영위상) 후 출력
+
+파라미터는 Train 1,296개에서 정했고(같은 파일끼리 짝지은 PESQ 차이가 표준오차의 2배 이상일 때만 채택), Validation은 확인용으로만 사용했습니다.
 
 ## Validation 결과 (164개 파일, PESQ-WB 16 kHz / SNR)
 
@@ -54,11 +61,17 @@ STFT(Hann 32 ms, hop 8 ms) 영역에서 **MMSE Log-Spectral Amplitude 추정기*
 | 기본 필터 (HP+LP+BS) | 1.449 | 9.07 |
 | Spectral Subtraction | 1.538 | 12.57 |
 | Wiener (decision-directed) | 1.598 | 13.12 |
-| **MMSE-LSA (제출 1회차)** | **1.718** | **13.29** |
+| MMSE-LSA (파일 고정 잡음 추정) | 1.718 | 13.29 |
+| + SPP 잡음 추적 | 1.870 | 14.16 |
+| + 입력 적응형 설정 혼합 | 1.941 | 11.73 |
+| + 배음 재생성 (반파 정류) | 1.998 | 11.96 |
+| **제출 1회차** (전파 정류, 80 ms 창, 200 Hz 고역 통과) | **2.114** | **5.85** |
 
 PESQ는 강의 노트북과 동일하게 `pesq==0.0.4`, wideband 모드, 정규화·시간 정렬 없이 계산하고 파일별 단순 평균을 냅니다.
+마지막 단계의 고역 통과는 PESQ를 올리지만 clean 음성의 저역 성분도 줄여 SNR(파형 오차 기준)을 낮춥니다. 순위 기준이 PESQ이므로 이를 선택했습니다.
 제출 버전의 파일별·잡음 종류별 결과: [`results/submissions/`](results/submissions/) ·
-전체 실험 기록: [`results/experiments.csv`](results/experiments.csv)
+전체 실험 기록: [`results/experiments.csv`](results/experiments.csv) ·
+단계별 실험(오라클 진단, 특징량, 범주별 로직의 채택·기각): `results/stage*/`, `results/diagnose_all/`
 
 ## 개발 / 평가 (팀원용)
 
@@ -83,7 +96,7 @@ Train으로 알고리즘·파라미터를 정하고(빠른 튜닝 200개 → 전
 | 경로 | 내용 |
 |---|---|
 | `denoise.py` | 제출 진입점 |
-| `nr/` | 알고리즘 (STFT, 잡음 추정, 이득 함수) |
+| `nr/` | 알고리즘 (STFT, 잡음 추정, 이득 함수, 특징량, 입력 적응형 혼합) |
 | `configs/` | 메소드·파라미터 설정 (`submission.json` = 제출 버전) |
 | `evaluate.py`, `compare.py` | 평가, 실행 간 비교 |
 | `submissions.json` | 회차별 제출 기록 (태그, 커밋, 점수) |
@@ -96,3 +109,6 @@ Train으로 알고리즘·파라미터를 정하고(빠른 튜닝 200개 → 전
 - S. F. Boll, "Suppression of acoustic noise in speech using spectral subtraction," *IEEE Trans. ASSP*, vol. 27, no. 2, pp. 113–120, 1979. doi:10.1109/TASSP.1979.1163209
 - Y. Ephraim, D. Malah, "Speech enhancement using a minimum-mean square error short-time spectral amplitude estimator," *IEEE Trans. ASSP*, vol. 32, no. 6, pp. 1109–1121, 1984. doi:10.1109/TASSP.1984.1164453
 - Y. Ephraim, D. Malah, "Speech enhancement using a minimum mean-square error log-spectral amplitude estimator," *IEEE Trans. ASSP*, vol. 33, no. 2, pp. 443–445, 1985. doi:10.1109/TASSP.1985.1164550
+- I. Cohen, B. Berdugo, "Speech enhancement for non-stationary noise environments," *Signal Processing*, vol. 81, no. 11, pp. 2403–2418, 2001. doi:10.1016/S0165-1684(01)00128-1
+- T. Gerkmann, R. C. Hendriks, "Unbiased MMSE-based noise power estimation with low complexity and low tracking delay," *IEEE Trans. ASLP*, vol. 20, no. 4, pp. 1383–1393, 2012. doi:10.1109/TASL.2011.2180896
+- C. Plapous, C. Marro, P. Scalart, "Improved signal-to-noise ratio estimation for speech enhancement," *IEEE Trans. ASLP*, vol. 14, no. 6, pp. 2098–2108, 2006. doi:10.1109/TASL.2006.872621

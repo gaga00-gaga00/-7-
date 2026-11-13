@@ -129,5 +129,8 @@ def test_evaluate_rejects_partial_round_or_subset_of_all(argv):
 def test_ai_usage_reads_round_train_results():
     if not (ROOT / "results" / "submissions" / "round1" / "train" / "summary.csv").exists():
         pytest.skip("round 1 train results not generated")
-    v = build_ai_usage.result_value("round1/train", "mmse_lsa")
+    info = json.loads((ROOT / "results" / "submissions" / "round1" / "train"
+                       / "run_config.json").read_text(encoding="utf-8"))
+    method = [m for m in info["methods"] if m != "noisy_input"][-1]
+    v = build_ai_usage.result_value("round1/train", method)
     assert v["n"] == 1296

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import numpy as np
 from scipy import signal
-from scipy.ndimage import uniform_filter1d
+from scipy.ndimage import uniform_filter, uniform_filter1d
 from scipy.special import exp1
 
 from . import noise as noise_est
@@ -159,14 +159,38 @@ def omlsa_gain_stft(z, noise, cfg: Config):
     return gain * z
 
 
+def refine_noise(z, s1, noise, sr, cfg: Config):
+    """Second-pass noise PSD from the cells where the first gain found no speech.
+
+    The first pass tells where speech is (gain near 1) and where it is not (gain
+    near the floor). Averaging the noisy power over the speech-free cells around
+    each cell gives a noise estimate that no longer needs the tracker's fixed
+    speech-presence prior. The gain is smoothed over 3x3 cells first so that the
+    selection does not simply pick the cells with a small noise realisation.
+    """
+    power = np.abs(z) ** 2
+    g = np.abs(s1) / np.maximum(np.abs(z), EPS)
+    absent = (1.0 - np.clip(uniform_filter(g, size=3, mode="nearest"), 0.0, 1.0)) ** 2
+    a = noise_est._alpha(cfg.noise_refine_tau_sec, frame_params(sr, cfg)[1] / sr)
+    num = noise_est._smooth_time(power * absent, a, zero_phase=True)
+    den = noise_est._smooth_time(absent, a, zero_phase=True)
+    trust = np.minimum(den / 0.1, 1.0)               # few speech-free cells: keep the tracker
+    refined = np.maximum(trust * num / np.maximum(den, 1e-6) + (1 - trust) * noise, EPS)
+    return np.exp((1 - cfg.noise_refine) * np.log(noise) + cfg.noise_refine * np.log(refined))
+
+
 def synthesize(z, noise, sr, length, cfg: Config):
     """Noisy STFT + noise PSD -> enhanced waveform (gain, optional harmonic regeneration)."""
     s1 = omlsa_gain_stft(z, noise, cfg)
+    if cfg.noise_refine > 0:
+        noise = refine_noise(z, s1, noise, sr, cfg)
+        s1 = omlsa_gain_stft(z, noise, cfg)
     if cfg.hrnr_weight > 0:
         # Harmonic regeneration (after Plapous et al. 2006): the gain removes weak
         # harmonics; half-wave rectifying the enhanced signal recreates them at the
         # right frequencies, which refines the a-priori SNR for a second gain.
-        _, zh = stft(np.maximum(istft(s1, sr, length, cfg), 0.0), sr, cfg)
+        x1 = istft(s1, sr, length, cfg)
+        _, zh = stft(np.abs(x1) if cfg.hrnr_mode == "abs" else np.maximum(x1, 0.0), sr, cfg)
         zh = zh[:, :z.shape[1]]
         g = np.abs(s1) / np.maximum(np.abs(z), EPS)
         xi = (g * np.abs(s1) ** 2 + (1 - g) * np.abs(zh) ** 2) / noise

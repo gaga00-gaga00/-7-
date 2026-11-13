@@ -67,8 +67,11 @@ def adaptive(x, sr, cfg: Config):
         noise = (1.0 - w["fixed"]) * noise + w["fixed"] * fixed
     noise = noise * (1.0 + strong * (cfg.ad_strong_noise_scale - 1.0))
 
+    hrnr = cfg.hrnr_weight
+    if cfg.ad_hrnr_flat_weight >= 0:               # flat noise takes more regeneration
+        hrnr += w["fixed"] * (cfg.ad_hrnr_flat_weight - hrnr)
     y = synthesize(z, noise, sr, len(x), cfg.with_overrides(
-        lsa_xi_min_db=xi_min, hrnr_weight=cfg.hrnr_weight * (1.0 - w["hrnr_off"])))
+        lsa_xi_min_db=xi_min, hrnr_weight=hrnr * (1.0 - w["hrnr_off"])))
     if w["lowcut"] > 0:
         cut = butterworth_stages(y, sr, cfg.with_overrides(highpass_hz=cfg.ad_lowcut_hz),
                                  ("highpass",))

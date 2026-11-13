@@ -1,0 +1,29 @@
+{
+  "description": "Candidate v3: adaptive blend + harmonic regeneration with full-wave rectification, 80/20 ms window, more regeneration for flat noise, a-priori SNR floor -30 dB, gentle (2nd order, zero phase) 200 Hz high-pass on every file. All values chosen on full train.",
+  "method": "adaptive",
+  "params": {
+    "win_sec": 0.08,
+    "hop_sec": 0.02,
+    "noise_fraction": 0.1,
+    "dd_alpha": 0.96,
+    "lsa_xi_min_db": -30.0,
+    "noise_estimator": "spp",
+    "noise_bidirectional": true,
+    "noise_smooth_bins": 1,
+    "spp_xi_h1_db": 12.0,
+    "spp_tau_sec": 0.3,
+    "omlsa_gain_floor": 0.05,
+    "omlsa_q": 0.01,
+    "omlsa_smooth_bins": 3,
+    "omlsa_tsnr": false,
+    "hrnr_weight": 0.5,
+    "hrnr_mode": "abs",
+    "ad_hrnr_flat_weight": 1.0,
+    "filter_order": 2,
+    "ad_lowcut_hz": 200.0,
+    "ad_lowcut_low_ratio": [
+      -1.0,
+      2.0
+    ]
+  }
+}

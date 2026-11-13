@@ -1,12 +1,29 @@
 {
-  "description": "Submission v1: MMSE-LSA + decision-directed a-priori SNR, lowest-energy-frame noise PSD",
-  "method": "mmse_lsa",
+  "description": "Submission round 1: input-adaptive OM-LSA. SPP noise tracking + LSA gain (80/20 ms STFT), per-file rule-based blending from two noisy-input features (spectral flatness, low-frequency share), harmonic regeneration second gain (full-wave rectification), gentle 200 Hz high-pass. All values chosen on the train split.",
+  "method": "adaptive",
   "params": {
-    "win_sec": 0.032,
-    "hop_sec": 0.008,
-    "noise_fraction": 0.2,
-    "dd_alpha": 0.98,
-    "lsa_xi_min_db": -25.0,
-    "lsa_gain_floor": 0.05
+    "win_sec": 0.08,
+    "hop_sec": 0.02,
+    "noise_fraction": 0.1,
+    "dd_alpha": 0.96,
+    "lsa_xi_min_db": -30.0,
+    "noise_estimator": "spp",
+    "noise_bidirectional": true,
+    "noise_smooth_bins": 1,
+    "spp_xi_h1_db": 12.0,
+    "spp_tau_sec": 0.3,
+    "omlsa_gain_floor": 0.05,
+    "omlsa_q": 0.01,
+    "omlsa_smooth_bins": 3,
+    "omlsa_tsnr": false,
+    "hrnr_weight": 0.5,
+    "hrnr_mode": "abs",
+    "ad_hrnr_flat_weight": 1.0,
+    "filter_order": 2,
+    "ad_lowcut_hz": 200.0,
+    "ad_lowcut_low_ratio": [
+      -1.0,
+      2.0
+    ]
   }
 }
