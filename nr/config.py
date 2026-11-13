@@ -76,6 +76,10 @@ class Config:
     ad_lowcut_hz: float = 150.0
     ad_low_ratio_width: float = 0.03   # sigmoid width for the F6 memberships
     ad_min_weight: float = 0.3         # all memberships below: use the base setting
+    # F6 above: fade out harmonic regeneration. Noise that sits almost entirely below
+    # 300 Hz leaves a low residual whose rectification spreads harmonics into the
+    # speech band. 1.5 = never (F6 <= 1).
+    ad_hrnr_off_low_ratio: float = 1.5
 
     def __post_init__(self):
         """Reject inconsistent parameters early (checks from the course notebook)."""

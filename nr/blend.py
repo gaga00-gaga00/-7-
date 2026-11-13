@@ -9,6 +9,8 @@ Two features of the noisy input (nr/features.py) drive four memberships in
     strong   little low-frequency noise (F6 low): over-estimate the noise and
              suppress deeper
     lowcut   mid-range low-frequency share (F6 between two thresholds): high-pass
+    hrnr_off noise almost entirely below 300 Hz (F6 very high): fade out the
+             harmonic regeneration gain (cfg.hrnr_weight)
 
 Blending (all memberships 0 = the plain omlsa method):
     noise PSD   (1 - fixed) * tracked + fixed * per-file fixed
@@ -44,6 +46,9 @@ def memberships(x, sr, cfg: Config) -> dict:
     }
     if max(w.values()) < cfg.ad_min_weight:
         w = dict.fromkeys(w, 0.0)
+    # not a setting to blend in but a brake on the second gain, so it is kept
+    # out of the safeguard above
+    w["hrnr_off"] = _sigmoid(low, cfg.ad_hrnr_off_low_ratio, cfg.ad_low_ratio_width)
     return w
 
 
@@ -62,7 +67,8 @@ def adaptive(x, sr, cfg: Config):
         noise = (1.0 - w["fixed"]) * noise + w["fixed"] * fixed
     noise = noise * (1.0 + strong * (cfg.ad_strong_noise_scale - 1.0))
 
-    y = synthesize(z, noise, sr, len(x), cfg.with_overrides(lsa_xi_min_db=xi_min))
+    y = synthesize(z, noise, sr, len(x), cfg.with_overrides(
+        lsa_xi_min_db=xi_min, hrnr_weight=cfg.hrnr_weight * (1.0 - w["hrnr_off"])))
     if w["lowcut"] > 0:
         cut = butterworth_stages(y, sr, cfg.with_overrides(highpass_hz=cfg.ad_lowcut_hz),
                                  ("highpass",))
