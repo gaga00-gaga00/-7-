@@ -9,7 +9,7 @@
     "url": "https://doi.org/10.1109/TASSP.1979.1163209",
     "used_for": "Spectral Subtraction 베이스라인: 잡음 파워 스펙트럼을 빼고 음수는 하한(spectral floor)으로 막는 방식, 과감산 계수 α",
     "doi_verified": "2026-11-13",
-    "checked_by": null
+    "checked_by": "홍서진, 박가영, 문소은"
   },
   {
     "id": "ephraim1984",
@@ -21,7 +21,7 @@
     "url": "https://doi.org/10.1109/TASSP.1984.1164453",
     "used_for": "사전 SNR(ξ)·사후 SNR(γ) 정의와 decision-directed 사전 SNR 추정식 ξ = α·|X̂(l-1)|²/λ_d + (1-α)·max(γ-1, 0), α = 0.98",
     "doi_verified": "2026-11-13",
-    "checked_by": null
+    "checked_by": "홍서진, 박가영, 문소은"
   },
   {
     "id": "ephraim1985",
@@ -33,7 +33,7 @@
     "url": "https://doi.org/10.1109/TASSP.1985.1164550",
     "used_for": "MMSE-LSA 이득 함수 G = ξ/(1+ξ)·exp(½·E1(v)), v = ξγ/(1+ξ) (제출 1회차의 핵심 이득 함수)",
     "doi_verified": "2026-11-13",
-    "checked_by": null
+    "checked_by": "홍서진, 박가영, 문소은"
   },
   {
     "id": "cohen2001",
@@ -45,7 +45,7 @@
     "url": "https://doi.org/10.1016/S0165-1684(01)00128-1",
     "used_for": "OM-LSA 이득 구조 G = G_H1^p · G_min^(1-p) (음성 존재 확률 p로 LSA 이득과 최소 이득을 섞는 형태). 제출 버전에서는 사전 음성 부재 확률 q = 0.01로 두어 사실상 LSA 이득에 가깝게 사용",
     "doi_verified": "2026-11-13",
-    "checked_by": null
+    "checked_by": "홍서진, 박가영, 문소은"
   },
   {
     "id": "gerkmann2012",
@@ -57,7 +57,7 @@
     "url": "https://doi.org/10.1109/TASL.2011.2180896",
     "used_for": "음성 존재 확률(SPP) 기반 잡음 PSD 추적: 고정 사전 SNR ξ_H1로 프레임·주파수별 음성 존재 확률을 구하고 λ_d를 (1-p)|Y|² + p·λ_d로 재귀 갱신, 정체 방지 규칙(평활한 p가 0.99를 넘으면 상한)",
     "doi_verified": "2026-11-13",
-    "checked_by": null
+    "checked_by": "홍서진, 박가영, 문소은"
   },
   {
     "id": "plapous2006",
@@ -69,6 +69,6 @@
     "url": "https://doi.org/10.1109/TASL.2006.872621",
     "used_for": "배음 재생성(HRNR): 1차 처리 결과에 비선형 함수(정류)를 적용해 지워진 배음을 되살리고, 그 스펙트럼으로 사전 SNR을 다시 추정해 2차 이득을 계산하는 방식. 2단계 사전 SNR 추정(TSNR)도 시험했으나 채택하지 않음",
     "doi_verified": "2026-11-13",
-    "checked_by": null
+    "checked_by": "홍서진, 박가영, 문소은"
   }
 ]
