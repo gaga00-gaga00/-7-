@@ -1,0 +1,107 @@
+train/all: 1296 files
+
+all files (percentiles)
+      F1 flatness  F2 tone_persist  F3 tone_drift  F4 impulsive  F5 variability  F6 low_ratio
+0.10        0.019            0.000          0.000         0.000           0.308         0.070
+0.25        0.051            0.000          0.000         0.000           0.522         0.169
+0.50        0.121            0.216        144.211         0.000           0.968         0.407
+0.75        0.252            0.730        247.005         0.011           1.803         0.677
+0.90        0.478            1.000        327.967         0.027           3.054         0.831
+
+median by noise label
+                        n  flatness  tone_persist  tone_drift  impulsive  variability  low_ratio
+noise_category                                                                                  
+aircraft_cockpit      111     0.336         0.000       0.000      0.000        0.399      0.314
+alarm_siren           187     0.076         0.946     160.998      0.000        0.957      0.094
+animal                 39     0.188         0.216     194.601      0.000        1.707      0.344
+bell                   15     0.147         0.919     200.005      0.000        1.260      0.267
+broadband_noise        73     0.528         0.000       0.000      0.005        0.214      0.421
+clap                    3     0.207         0.324     180.612      0.027        2.292      0.475
+click                   3     0.305         0.297     142.492      0.060        0.831      0.900
+destroyer_engine       36     0.111         1.000     146.950      0.000        0.517      0.163
+destroyer_operations   36     0.191         0.365     212.551      0.000        0.630      0.654
+door_moving             3     0.149         0.108     172.170      0.038        1.646      0.387
+factory                38     0.198         0.000       0.000      0.005        1.138      0.654
+footsteps               8     0.181         0.135     267.851      0.005        1.468      0.548
+hf_channel             37     0.131         0.081     149.976      0.000        0.357      0.064
+machine               264     0.106         0.270     130.177      0.000        1.124      0.603
+machine_gun             3     0.178         0.486     236.992      0.000        2.410      0.652
+military_vehicle       37     0.077         0.270     276.967      0.000        1.241      0.749
+phone_dialing          43     0.021         0.919     146.657      0.000        0.763      0.960
+shower                  3     0.665         0.189     350.943      0.000        0.495      0.140
+tooth_brushing          3     0.429         0.108     342.795      0.016        0.974      0.296
+traffic_vehicle        76     0.106         0.216     244.959      0.000        1.087      0.625
+vehicle_interior       19     0.101         0.000       0.000      0.000        1.801      0.867
+water                  57     0.399         0.162     155.895      0.011        1.109      0.304
+wind                  202     0.059         0.081     169.205      0.000        1.127      0.458
+
+25th percentile by noise label
+                      flatness  tone_persist  tone_drift  impulsive  variability  low_ratio
+noise_category                                                                             
+aircraft_cockpit         0.229         0.000       0.000      0.000        0.292      0.233
+alarm_siren              0.023         0.581      87.187      0.000        0.524      0.051
+animal                   0.151         0.095     153.745      0.000        1.234      0.222
+bell                     0.075         0.851     188.584      0.000        0.956      0.186
+broadband_noise          0.487         0.000       0.000      0.000        0.169      0.077
+clap                     0.164         0.162      90.306      0.019        2.041      0.470
+click                    0.166         0.149      71.246      0.030        0.807      0.558
+destroyer_engine         0.083         0.959     103.807      0.000        0.378      0.135
+destroyer_operations     0.180         0.101     182.275      0.000        0.533      0.621
+door_moving              0.129         0.054      86.085      0.022        1.530      0.335
+factory                  0.095         0.000       0.000      0.000        0.676      0.526
+footsteps                0.053         0.108     230.386      0.000        1.245      0.486
+hf_channel               0.097         0.000       0.000      0.000        0.255      0.049
+machine                  0.040         0.000       0.000      0.000        0.749      0.317
+machine_gun              0.145         0.243     118.496      0.000        2.236      0.530
+military_vehicle         0.041         0.000       0.000      0.000        0.880      0.712
+phone_dialing            0.003         0.811     103.486      0.000        0.415      0.910
+shower                   0.657         0.176     324.187      0.000        0.435      0.137
+tooth_brushing           0.354         0.054     171.397      0.008        0.889      0.272
+traffic_vehicle          0.058         0.000       0.000      0.000        0.617      0.477
+vehicle_interior         0.050         0.000       0.000      0.000        1.256      0.777
+water                    0.258         0.000       0.000      0.000        0.917      0.194
+wind                     0.029         0.000       0.000      0.000        0.668      0.114
+
+75th percentile by noise label
+                      flatness  tone_persist  tone_drift  impulsive  variability  low_ratio
+noise_category                                                                             
+aircraft_cockpit         0.690         0.108     226.588      0.016        0.674      0.429
+alarm_siren              0.149         1.000     218.775      0.000        1.743      0.187
+animal                   0.261         0.473     276.940      0.016        2.471      0.433
+bell                     0.172         0.986     322.083      0.000        2.230      0.398
+broadband_noise          0.946         0.081     156.504      0.022        0.522      0.483
+clap                     0.315         0.527     187.796      0.033        2.397      0.636
+click                    0.322         0.649     147.672      0.060        1.794      0.939
+destroyer_engine         0.152         1.000     167.870      0.000        0.865      0.227
+destroyer_operations     0.237         0.459     253.956      0.016        1.099      0.676
+door_moving              0.270         0.135     329.023      0.049        1.872      0.612
+factory                  0.293         0.000       0.000      0.016        1.787      0.728
+footsteps                0.247         0.189     356.185      0.011        2.374      0.680
+hf_channel               0.167         0.243     227.691      0.016        0.633      0.123
+machine                  0.230         0.730     240.243      0.011        2.263      0.745
+machine_gun              0.199         0.527     263.483      0.003        2.805      0.661
+military_vehicle         0.107         0.649     368.960      0.011        2.794      0.842
+phone_dialing            0.036         1.000     183.486      0.014        1.388      0.987
+shower                   0.691         0.257     420.086      0.003        0.637      0.147
+tooth_brushing           0.440         0.135     392.521      0.019        1.054      0.312
+traffic_vehicle          0.154         0.385     295.885      0.007        1.851      0.756
+vehicle_interior         0.179         0.108     209.956      0.014        2.862      0.909
+water                    0.496         0.378     208.362      0.027        1.427      0.349
+wind                     0.100         0.324     306.058      0.016        2.659      0.734
+
+median by SNR (a noise feature should not depend on it much)
+               flatness  tone_persist  tone_drift  impulsive  variability  low_ratio
+target_snr_db                                                                       
+0.0               0.054         0.243     100.862        0.0        0.443      0.250
+5.0               0.078         0.243     120.440        0.0        0.667      0.407
+10.0              0.130         0.216     156.712        0.0        0.891      0.381
+15.0              0.169         0.216     168.853        0.0        1.263      0.432
+
+Spearman correlation of each feature with (setting - S1_base), n=1296
+                 S2_strong  S3_weak  S4_lowcut  N1_fast  N2_slow  N3_fixed
+F1 flatness           0.16     0.04       0.05    -0.21     0.34      0.38
+F2 tone_persist       0.09    -0.06       0.02     0.14    -0.13     -0.15
+F3 tone_drift         0.01     0.06       0.08     0.06    -0.00      0.03
+F4 impulsive         -0.07     0.02      -0.08    -0.07     0.07      0.09
+F5 variability       -0.25     0.13      -0.18     0.13    -0.18     -0.18
+F6 low_ratio         -0.36     0.02      -0.10     0.18    -0.27     -0.27

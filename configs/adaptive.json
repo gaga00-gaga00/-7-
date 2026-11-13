@@ -1,0 +1,20 @@
+{
+  "description": "Candidate: SPP + LSA (configs/omlsa.json) with per-file rule-based blending: fixed noise PSD for flat noise, faster tracking for coloured noise, stronger suppression for little low-frequency noise, 150 Hz high-pass for a mid low-frequency share (nr/blend.py)",
+  "method": "adaptive",
+  "params": {
+    "win_sec": 0.064,
+    "hop_sec": 0.016,
+    "noise_fraction": 0.1,
+    "dd_alpha": 0.96,
+    "lsa_xi_min_db": -25.0,
+    "noise_estimator": "spp",
+    "noise_bidirectional": true,
+    "noise_smooth_bins": 1,
+    "spp_xi_h1_db": 12.0,
+    "spp_tau_sec": 0.3,
+    "omlsa_gain_floor": 0.05,
+    "omlsa_q": 0.01,
+    "omlsa_smooth_bins": 3,
+    "omlsa_tsnr": false
+  }
+}

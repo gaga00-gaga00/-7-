@@ -57,6 +57,25 @@ class Config:
     omlsa_q: float = 0.5          # a-priori speech absence probability
     omlsa_smooth_bins: int = 3    # frequency smoothing of the SNR used for p
     omlsa_tsnr: bool = False      # two-step a-priori SNR refinement (Plapous et al. 2006)
+    dd_combine: str = "forward"   # "forward" | "geomean" | "max": offline two-direction DD
+    hrnr_weight: float = 0.0      # harmonic regeneration second gain (0 = off, 1 = full)
+    # category-specific additions on top of the tracked noise PSD (nr/noise_modules.py);
+    # weight 0 = off, so the defaults leave omlsa unchanged
+    tone_weight: float = 0.0      # C1: lift the noise PSD along noise-tone tracks
+    impulse_weight: float = 0.0   # C2: lift the noise PSD inside short broadband bursts
+    post_highpass_hz: float = 0.0  # C3: high-pass after enhancement (0 = off)
+    # input-adaptive blend (nr/blend.py, method "adaptive"); thresholds chosen on train
+    ad_fixed_flatness: float = 0.4     # F1 above: blend towards the per-file fixed noise PSD
+    ad_fast_flatness: float = 0.25     # F1 below: faster SPP tracking
+    ad_flatness_width: float = 0.03    # sigmoid width for both F1 memberships
+    ad_fast_tau_sec: float = 0.1
+    ad_strong_low_ratio: float = 0.17  # F6 below: stronger suppression
+    ad_strong_noise_scale: float = 2.0
+    ad_strong_xi_min_db: float = -35.0
+    ad_lowcut_low_ratio: tuple = (0.4, 0.8)  # F6 inside: high-pass the output
+    ad_lowcut_hz: float = 150.0
+    ad_low_ratio_width: float = 0.03   # sigmoid width for the F6 memberships
+    ad_min_weight: float = 0.3         # all memberships below: use the base setting
 
     def __post_init__(self):
         """Reject inconsistent parameters early (checks from the course notebook)."""
@@ -90,6 +109,12 @@ class Config:
             raise ValueError("Invalid minimum statistics / MCRA parameters.")
         if not 0 < self.omlsa_q < 1:
             raise ValueError("omlsa_q must be in (0, 1).")
+        if self.tone_weight < 0 or self.impulse_weight < 0 or self.post_highpass_hz < 0:
+            raise ValueError("tone_weight, impulse_weight and post_highpass_hz must be >= 0.")
+        if self.ad_flatness_width <= 0 or self.ad_low_ratio_width <= 0                 or self.ad_fast_tau_sec < 0 or self.ad_strong_noise_scale <= 0                 or len(self.ad_lowcut_low_ratio) != 2 or self.ad_lowcut_hz <= 0:
+            raise ValueError("Invalid adaptive blend parameters.")
+        if self.dd_combine not in ("forward", "geomean", "max") or not 0 <= self.hrnr_weight <= 1:
+            raise ValueError("Invalid dd_combine / hrnr_weight.")
         if self.noise_smooth_bins < 1 or int(self.noise_smooth_bins) != self.noise_smooth_bins:
             raise ValueError("noise_smooth_bins must be a positive integer.")
         if self.omlsa_smooth_bins < 1 or int(self.omlsa_smooth_bins) != self.omlsa_smooth_bins:

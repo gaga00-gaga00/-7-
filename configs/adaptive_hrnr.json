@@ -1,0 +1,21 @@
+{
+  "description": "Candidate: configs/adaptive.json + harmonic regeneration second gain (hrnr_weight 0.5, chosen on full train)",
+  "method": "adaptive",
+  "params": {
+    "win_sec": 0.064,
+    "hop_sec": 0.016,
+    "noise_fraction": 0.1,
+    "dd_alpha": 0.96,
+    "lsa_xi_min_db": -25.0,
+    "noise_estimator": "spp",
+    "noise_bidirectional": true,
+    "noise_smooth_bins": 1,
+    "spp_xi_h1_db": 12.0,
+    "spp_tau_sec": 0.3,
+    "omlsa_gain_floor": 0.05,
+    "omlsa_q": 0.01,
+    "omlsa_smooth_bins": 3,
+    "omlsa_tsnr": false,
+    "hrnr_weight": 0.5
+  }
+}

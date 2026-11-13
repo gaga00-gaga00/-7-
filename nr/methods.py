@@ -6,6 +6,7 @@ spectral_subtraction  Boll (1979) power subtraction (course baseline)
 wiener_filter         Wiener gain + decision-directed a-priori SNR (course baseline)
 mmse_lsa              Ephraim & Malah (1985) log-spectral amplitude estimator
 omlsa                 Cohen & Berdugo (2001) OM-LSA on a tracked noise PSD (SPP), optional TSNR
+adaptive              omlsa with per-file rule-based blending of its settings (nr/blend.py)
 """
 from __future__ import annotations
 
@@ -15,8 +16,10 @@ from scipy.ndimage import uniform_filter1d
 from scipy.special import exp1
 
 from . import noise as noise_est
+from .blend import adaptive
+from . import noise_modules as modules
 from .config import DEFAULT, Config
-from .stft import istft, stft
+from .stft import frame_params, istft, stft
 
 EPS = 1e-12
 
@@ -114,16 +117,15 @@ def mmse_lsa(x, sr, cfg: Config):
     return istft(out, sr, len(x), cfg)
 
 
-def omlsa_gain_stft(z, noise, cfg: Config):
-    """Apply the OM-LSA gain to a noisy STFT z for a (freq_bins, frames) noise PSD."""
-    power = np.abs(z) ** 2
+def _omlsa_gain(power, noise, cfg: Config):
+    """(freq_bins, frames) OM-LSA gain, decision-directed in the given frame order."""
     gamma = np.minimum(power / noise, 1e4)
     xi_min = 10 ** (cfg.lsa_xi_min_db / 10)
     q_ratio = cfg.omlsa_q / (1 - cfg.omlsa_q)
     log_gmin = np.log(max(cfg.omlsa_gain_floor, 1e-6))
-    out = np.empty_like(z)
+    gain = np.empty_like(power)
     prev = np.zeros(power.shape[0])  # |G_H1 * Y|^2 of the previous frame
-    for k in range(z.shape[1]):
+    for k in range(power.shape[1]):
         g_k = gamma[:, k]
         inst = np.maximum(g_k - 1.0, 0.0)
         xi = inst if k == 0 else cfg.dd_alpha * prev / noise[:, k] + (1 - cfg.dd_alpha) * inst
@@ -137,9 +139,40 @@ def omlsa_gain_stft(z, noise, cfg: Config):
         ga_s = uniform_filter1d(g_k, size=cfg.omlsa_smooth_bins, mode="nearest")
         v = np.minimum(xi_s * ga_s / (1.0 + xi_s), 200.0)
         p = 1.0 / (1.0 + q_ratio * (1.0 + xi_s) * np.exp(-v))
-        g = np.exp(p * np.log(np.maximum(g1, 1e-6)) + (1 - p) * log_gmin)
-        out[:, k] = g * z[:, k]
-    return out
+        gain[:, k] = np.exp(p * np.log(np.maximum(g1, 1e-6)) + (1 - p) * log_gmin)
+    return gain
+
+
+def omlsa_gain_stft(z, noise, cfg: Config):
+    """Apply the OM-LSA gain to a noisy STFT z for a (freq_bins, frames) noise PSD.
+
+    cfg.dd_combine: the decision-directed recursion lags one frame, so run forward
+    it attenuates onsets and run backward it attenuates offsets. Offline both
+    directions are available: "geomean" / "max" combine the two gains.
+    """
+    power = np.abs(z) ** 2
+    noise = np.broadcast_to(noise, power.shape)
+    gain = _omlsa_gain(power, noise, cfg)
+    if cfg.dd_combine != "forward":
+        back = _omlsa_gain(power[:, ::-1], noise[:, ::-1], cfg)[:, ::-1]
+        gain = np.sqrt(gain * back) if cfg.dd_combine == "geomean" else np.maximum(gain, back)
+    return gain * z
+
+
+def synthesize(z, noise, sr, length, cfg: Config):
+    """Noisy STFT + noise PSD -> enhanced waveform (gain, optional harmonic regeneration)."""
+    s1 = omlsa_gain_stft(z, noise, cfg)
+    if cfg.hrnr_weight > 0:
+        # Harmonic regeneration (after Plapous et al. 2006): the gain removes weak
+        # harmonics; half-wave rectifying the enhanced signal recreates them at the
+        # right frequencies, which refines the a-priori SNR for a second gain.
+        _, zh = stft(np.maximum(istft(s1, sr, length, cfg), 0.0), sr, cfg)
+        zh = zh[:, :z.shape[1]]
+        g = np.abs(s1) / np.maximum(np.abs(z), EPS)
+        xi = (g * np.abs(s1) ** 2 + (1 - g) * np.abs(zh) ** 2) / noise
+        g2 = np.maximum(xi / (1.0 + xi), g * 0 + 10 ** (cfg.lsa_xi_min_db / 20))
+        s1 = ((1 - cfg.hrnr_weight) * g + cfg.hrnr_weight * g2) * z
+    return istft(s1, sr, length, cfg)
 
 
 def omlsa(x, sr, cfg: Config):
@@ -152,10 +185,26 @@ def omlsa(x, sr, cfg: Config):
     presence    p = 1 / (1 + q/(1-q) * (1+xi) * exp(-v)), xi and gamma smoothed
                 over frequency, fixed a-priori absence probability q
     gain        G = G_H1^p * G_min^(1-p)
+    extras      cfg.tone_weight / impulse_weight add to the noise PSD
+                (nr/noise_modules.py), cfg.post_highpass_hz filters the output
     """
     t, z = stft(x, sr, cfg)
     noise = noise_est.estimate(z, t, sr, len(x), cfg)
-    return istft(omlsa_gain_stft(z, noise, cfg), sr, len(x), cfg)
+    if cfg.tone_weight > 0 or cfg.impulse_weight > 0:
+        power = np.abs(z) ** 2
+        f = np.fft.rfftfreq(2 * (z.shape[0] - 1), 1 / sr)
+        hop_sec = frame_params(sr, cfg)[1] / sr
+        extra = np.zeros_like(power)
+        if cfg.tone_weight > 0:
+            extra += cfg.tone_weight * modules.tone_delta(power, noise, f, hop_sec)
+        if cfg.impulse_weight > 0:
+            extra += cfg.impulse_weight * modules.impulse_delta(power, noise, f, hop_sec)
+        noise = noise + extra
+    y = synthesize(z, noise, sr, len(x), cfg)
+    if cfg.post_highpass_hz > 0:
+        y = butterworth_stages(y, sr, cfg.with_overrides(highpass_hz=cfg.post_highpass_hz),
+                               ("highpass",))
+    return y
 
 
 # --------------------------------------------------------------------------
@@ -168,6 +217,7 @@ METHODS = {
     "wiener_filter": wiener_filter,
     "mmse_lsa": mmse_lsa,
     "omlsa": omlsa,
+    "adaptive": adaptive,
 }
 
 
